@@ -33,7 +33,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from dystros import filters, utils, store
+from dystros import filters, utils
 
 parser = optparse.OptionParser("travel")
 parser.add_option_group(utils.CalendarOptionGroup(parser))

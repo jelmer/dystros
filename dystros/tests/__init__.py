@@ -22,10 +22,7 @@ import unittest
 
 def test_suite():
     names = [
-        'caldav',
         'filters',
-        'store',
-        'webdav',
         ]
     module_names = ['dystros.tests.test_' + name for name in names]
     loader = unittest.TestLoader()

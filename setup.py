@@ -25,11 +25,11 @@ from distutils.core import setup
 version = "0.0.1"
 
 setup(name="dystros",
-      description="CalDAV/CardDAV server",
+      description="Tools for working with CalDAV/CardDAV",
       version=version,
       author="Jelmer Vernooij",
       author_email="jelmer@jelmer.uk",
       license="Apache v2 or later",
       url="https://www.jelmer.uk/projects/dystros",
-      requires=['jinja2', 'icalendar', 'dulwich', 'defusedxml'],
+      requires=['jinja2', 'icalendar', 'defusedxml'],
       packages=['dystros'])
