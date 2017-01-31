@@ -35,7 +35,6 @@ from icalendar.prop import vDate, vDuration, vDatetime, vText, vUri
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from dystros.store import GitStore
 from dystros import utils
 
 parser = optparse.OptionParser("travel")
