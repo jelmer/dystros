@@ -80,11 +80,15 @@ for ev in filters.extract_vevents(cals):
         url = None
 
     if ev['CATEGORIES'] == opts.category or opts.category in ev['CATEGORIES']:
-        if ev.get('CLASS') == 'PRIVATE':
+        if ev.get('CLASS') in ('CONFIDENTIAL', 'PRIVATE'):
             summary = "Away"
-            location = None
+            url = None
         else:
             summary = ev['SUMMARY']
+
+        if ev.get('CLASS') == 'CONFIDENTIAL':
+            location = None
+        else:
             try:
                 location = ev['LOCATION']
             except KeyError:
@@ -99,7 +103,7 @@ for ev in filters.extract_vevents(cals):
     else:
         # TODO(jelmer): There must be a cleaner way of doing this..
         logging.info(
-            'Skipping %s because it does not have right catoregies (%s)',
+            'Skipping %s because it does not have right categories (%s)',
             ev['SUMMARY'], ev.get('CATEGORIES'))
         continue
     travelev = TravelEvent(summary=summary, url=url, location=location,

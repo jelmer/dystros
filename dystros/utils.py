@@ -25,12 +25,15 @@ from xml.etree import ElementTree as ET
 
 import datetime
 from icalendar.cal import Calendar
+from icalendar.prop import vDDDTypes
 import optparse
 import os
 import urllib.parse
 import urllib.request
 
-DEFAULT_URL = 'https://www.rinze.eu/dav/jelmer/calendars/calendar'
+BASE_URL = 'https://www.rinze.eu/dav/jelmer/calendars/'
+DEFAULT_URL = urllib.parse.urljoin(BASE_URL, 'calendar') + '/'
+
 
 class CalendarOptionGroup(optparse.OptionGroup):
     """Return a optparser OptionGroup.
@@ -123,9 +126,7 @@ def report(url, req, depth=None):
         depth = '1'
     req = urllib.request.Request(url=url, data=ET.tostring(req), method='REPORT')
     req.add_header('Depth', depth)
-    with urllib.request.urlopen(req) as f:
-        assert f.status == 207, f.status
-        return xmlparse(f.read())
+    return urllib.request.urlopen(req)
 
 
 def _extend_inner_filter(et, inner_filter):
@@ -192,7 +193,9 @@ def calendar_query(url, props, filter=None, depth=None):
         filterxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}filter')
         filterxml.append(filter)
 
-    respxml = report(url, reqxml, depth)
+    with report(url, reqxml, depth) as f:
+        assert f.status == 207, f.status
+        respxml = xmlparse(f.read())
     return multistat_extract_responses(respxml)
 
 
@@ -263,3 +266,15 @@ def get_vevent_by_uid(url, uid, depth='1'):
         assert data is not None, "data missing for %r" % href
         return (href, etag, Calendar.from_ical(data))
     raise KeyError(uid)
+
+
+def get_freebusy(url, start, end, depth=None):
+    reqxml = ET.Element('{urn:ietf:params:xml:ns:caldav}free-busy-query')
+    propxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}time-range')
+    if start is not None:
+        propxml.set('start', vDDDTypes(start).to_ical().decode('ascii'))
+    if end is not None:
+        propxml.set('end', vDDDTypes(end).to_ical().decode('ascii'))
+    with report(url, reqxml, depth) as f:
+        assert f.status == 200, f.status
+        return f.read()

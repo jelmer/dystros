@@ -57,6 +57,7 @@ def fix_vevent(vevent):
     status = None
     if str(vevent['DESCRIPTION']).startswith(TRACKING_PREFIX):
         vevent['DESCRIPTION'] = vevent['DESCRIPTION'][len(TRACKING_PREFIX):]
+        vevent['STATUS'] = 'TENTATIVE'
     if str(vevent['DESCRIPTION']).startswith(GOING_PREFIX):
         vevent['STATUS'] = 'CONFIRMED'
         vevent['DESCRIPTION'] = vevent['DESCRIPTION'][len(GOING_PREFIX):]
