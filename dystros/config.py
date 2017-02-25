@@ -23,10 +23,10 @@ import os
 
 from configobj import ConfigObj
 
-from xdg.BaseDirectory import xdg_home
+from xdg.BaseDirectory import xdg_config_home
 
 def GetConfig():
-    config_dir_path = os.path.join(xdg_home, 'dystros')
+    config_dir_path = os.path.join(xdg_config_home, 'dystros')
     os.makedirs(config_dir_path, exist_ok=True)
     config_file_path = os.path.join(config_dir_path, 'config')
     return ConfigObj(config_file_path, create_empty=True)

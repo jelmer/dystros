@@ -31,8 +31,20 @@ import os
 import urllib.parse
 import urllib.request
 
-from dystros import GetConfig
+from dystros.config import GetConfig
 
+def install_opener():
+    auth_handler = urllib.request.HTTPBasicAuthHandler()
+    config = GetConfig()
+    auth_handler.add_password(realm='data-abundance',
+                              uri=config['base_url'],
+                              user=config['user'],
+                              passwd=config['password'])
+    opener = urllib.request.build_opener(auth_handler)
+    opener.addheaders = [('User-Agent', 'dystros/calutils')]
+    urllib.request.install_opener(opener)
+
+install_opener()
 
 class CalendarOptionGroup(optparse.OptionGroup):
     """Return a optparser OptionGroup.
@@ -46,7 +58,7 @@ class CalendarOptionGroup(optparse.OptionGroup):
         optparse.OptionGroup.__init__(self, parser, "Calendar Settings")
         config = GetConfig()
         self.add_option('--url', type=str, dest="url", help="Calendar URL.",
-                        default=config.get('default_url'))
+                        default=config['default_url'])
 
 
 def statuschar(evstatus):
