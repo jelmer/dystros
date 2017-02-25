@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # encoding: utf-8
 #
 # Dystros
@@ -20,19 +19,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301, USA.
 
-
-import datetime
-import optparse
 import os
-import pytz
-import sys
 
-sys.path.insert(0, os.path.dirname(__file__))
+from configobj import ConfigObj
 
-from dystros import utils
+from xdg.BaseDirectory import xdg_home
 
-parser = optparse.OptionParser("travel")
-parser.add_option_group(utils.CalendarOptionGroup(parser))
-opts, args = parser.parse_args()
-
-sys.stdout.buffer.write(utils.get_freebusy(opts.url, start=datetime.datetime(2000, 1, 1).replace(tzinfo=pytz.timezone('UTC')), end=datetime.datetime.utcnow().replace(tzinfo=pytz.timezone('UTC'))))
+def GetConfig():
+    config_dir_path = os.path.join(xdg_home, 'dystros')
+    os.makedirs(config_dir_path, exist_ok=True)
+    config_file_path = os.path.join(config_dir_path, 'config')
+    return ConfigObj(config_file_path, create_empty=True)

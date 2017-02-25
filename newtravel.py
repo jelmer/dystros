@@ -40,6 +40,7 @@ from dystros import utils
 parser = optparse.OptionParser("travel")
 parser.add_option_group(utils.CalendarOptionGroup(parser))
 parser.add_option('--categories', type=str, dest="categories", help="Comma-separated list of categories to set", default="Travel")
+parser.add_option('--event-url', type=str, dest="event_url", help="Event URL.")
 opts, args = parser.parse_args()
 
 description = args[0].strip()
@@ -97,8 +98,8 @@ if status is not None:
     props['status'] = status
 if location is not None:
     props['location'] = vText(location)
-if opts.url:
-    props['url'] = vUri(opts.url)
+if opts.event_url:
+    props['url'] = vUri(opts.event_url)
 if description is not None:
     props['summary'] = vText(description)
 if dtend is not None:

@@ -31,8 +31,7 @@ import os
 import urllib.parse
 import urllib.request
 
-BASE_URL = 'https://www.rinze.eu/dav/jelmer/calendars/'
-DEFAULT_URL = urllib.parse.urljoin(BASE_URL, 'calendar') + '/'
+from dystros import GetConfig
 
 
 class CalendarOptionGroup(optparse.OptionGroup):
@@ -45,8 +44,9 @@ class CalendarOptionGroup(optparse.OptionGroup):
 
     def __init__(self, parser):
         optparse.OptionGroup.__init__(self, parser, "Calendar Settings")
-        self.add_option('--url', type=str, dest="url", help="Default calendar URL.",
-                        default=DEFAULT_URL)
+        config = GetConfig()
+        self.add_option('--url', type=str, dest="url", help="Calendar URL.",
+                        default=config.get('default_url'))
 
 
 def statuschar(evstatus):
