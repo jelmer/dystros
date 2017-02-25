@@ -36,10 +36,11 @@ from dystros.config import GetConfig
 def install_opener():
     auth_handler = urllib.request.HTTPBasicAuthHandler()
     config = GetConfig()
-    auth_handler.add_password(realm='data-abundance',
-                              uri=config['base_url'],
-                              user=config['user'],
-                              passwd=config['password'])
+    if 'password' in config and 'user' in config:
+        auth_handler.add_password(realm='data-abundance',
+                                  uri=config['base_url'],
+                                  user=config['user'],
+                                  passwd=config['password'])
     opener = urllib.request.build_opener(auth_handler)
     opener.addheaders = [('User-Agent', 'dystros/calutils')]
     urllib.request.install_opener(opener)
