@@ -247,6 +247,54 @@ def put(url, data, if_match=None):
     assert f.status in (201, 204, 200), f.status
 
 
+def post(url, content_type, data, if_match=None):
+    req = urllib.request.Request(url=url, data=data, method='POST')
+    if if_match is not None:
+        req.add_header('If-None-Match', ', '.join(if_match))
+    req.add_header('Content-Type', content_type)
+    with urllib.request.urlopen(req) as f:
+        pass
+    assert f.status in (201, 204, 200), f.status
+
+
+def getprop(url, props, depth=None):
+    reqxml = ET.Element('{DAV:}propfind')
+    propxml = ET.SubElement(reqxml, '{DAV:}prop')
+    for prop in props:
+        if isinstance(prop, str):
+            ET.SubElement(propxml, prop)
+        else:
+            propxml.append(prop)
+
+    if depth is None:
+        depth = '0'
+    req = urllib.request.Request(url=url, data=ET.tostring(reqxml), method='PROPFIND')
+    req.add_header('Depth', depth)
+    with urllib.request.urlopen(req) as f:
+        assert f.status == 207, f.status
+        respxml = xmlparse(f.read())
+    return multistat_extract_responses(respxml)
+
+
+def get_addmember_url(url):
+    for (href, status, propstat) in getprop(url, ['{DAV:}add-member']):
+        if status == 'HTTP/1.1 404 Not Found':
+            raise KeyError(url)
+        by_status = {}
+        for propstatsub in propstat:
+            if propstatsub.tag == '{DAV:}status':
+                if propstatsub.text == 'HTTP/1.1 404 Not Found':
+                    raise KeyError(uid)
+            elif propstatsub.tag == '{DAV:}prop':
+                by_status[status] = propstatsub
+            else:
+                assert False, 'invalid %r' % propstatsub.tag
+        for prop in by_status.get('HTTP/1.1 200 OK', []):
+            if prop.tag == '{DAV:}add-member':
+                return urllib.parse.urljoin(url, list(prop)[0].text)
+    raise KeyError(url)
+
+
 def get_vevent_by_uid(url, uid, depth='1'):
     uidprop = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-data')
     uidprop.set('name', 'UID')

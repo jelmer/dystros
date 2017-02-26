@@ -114,10 +114,5 @@ ev = Event(**props)
 c = Calendar()
 c.add_component(ev)
 
-fname = uid + '.ics'
-
-url = urllib.parse.urljoin(opts.url, fname)
-
-utils.put(url, c.to_ical())
-
-logging.info('Wrote %s', url)
+addmember_url = utils.get_addmember_url(opts.url)
+utils.post(addmember_url, 'text/calendar', c.to_ical())
