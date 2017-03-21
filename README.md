@@ -1,8 +1,13 @@
+[![Build Status](https://travis-ci.org/jelmer/dystros.png?branch=master)](https://travis-ci.org/jelmer/dystros)
+
 Dystros is a set of command-line utilities for working with calendars and
 addressbooks over CalDAV/CardDAV.
 
 Dystros (Δύστρος) takes its name from the name of the February month in the ancient
 Macedonian calendar, used in Macedon in the first millennium BC.
+
+It's mostly a collection of scripts related to ics for my personal use, but
+some scripts may be useful for others.
 
 Tools
 =====
