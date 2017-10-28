@@ -150,7 +150,7 @@ def keyTodo(a):
 def report(url, req, depth=None):
     if depth is None:
         depth = '1'
-    req = urllib.request.Request(url=url, data=ET.tostring(req), method='REPORT')
+    req = urllib.request.Request(url=url, headers={'Content-Type': 'application/xml'}, data=ET.tostring(req), method='REPORT')
     req.add_header('Depth', depth)
     return urllib.request.urlopen(req)
 
