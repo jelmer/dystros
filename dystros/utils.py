@@ -19,6 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301, USA.
 
+import argparse
+
 from defusedxml.ElementTree import fromstring as xmlparse
 # Hmm, defusedxml doesn't have XML generation functions? :(
 from xml.etree import ElementTree as ET
@@ -60,6 +62,17 @@ class CalendarOptionGroup(optparse.OptionGroup):
         config = GetConfig()
         self.add_option('--url', type=str, dest="url", help="Calendar URL.",
                         default=config['default_url'])
+
+
+def add_calendar_arguments(parser):
+    """Add an argument group for calendar options.
+
+    :param parser: An ArgumentParser
+    """
+    group = parser.add_argument_group("Calendar Settings")
+    config = GetConfig()
+    group.add_argument('--url', type=str, dest="url", help="Calendar URL.",
+                       default=config['default_url'])
 
 
 def statuschar(evstatus):
