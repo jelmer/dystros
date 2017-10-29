@@ -148,38 +148,6 @@ def keyTodo(a):
     return (priority, due_date, due_time, a['SUMMARY'])
 
 
-def _extend_inner_filter(et, inner_filter):
-    if inner_filter is None:
-        return
-    if not isinstance(inner_filter, list):
-        inner_filter = [inner_filter]
-    for f in inner_filter:
-        et.append(f)
-
-
-def comp_filter(name, inner_filter=None):
-    ret = ET.Element('{urn:ietf:params:xml:ns:caldav}comp-filter')
-    if name is not None:
-        ret.set('name', name)
-    _extend_inner_filter(ret, inner_filter)
-    return ret
-
-
-def prop_filter(name, inner_filter=None):
-    ret = ET.Element('{urn:ietf:params:xml:ns:caldav}prop-filter')
-    if name is not None:
-        ret.set('name', name)
-    _extend_inner_filter(ret, inner_filter)
-    return ret
-
-
-def text_match(text, collation):
-    ret = ET.Element('{urn:ietf:params:xml:ns:caldav}text-match')
-    ret.text = text
-    ret.set('collation', collation)
-    return ret
-
-
 def get_all_calendars(url, depth=None, filter=None):
     for (href, status, propstat) in caldav.calendar_query(
             url, ['{DAV:}getetag', '{urn:ietf:params:xml:ns:caldav}calendar-data'], filter):
@@ -267,9 +235,9 @@ def get_vevent_by_uid(url, uid, depth='1'):
     dataprop = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-data')
     ret = caldav.calendar_query(
         url, props=[uidprop, dataprop, '{DAV:}getetag'], depth=depth,
-        filter=comp_filter("VCALENDAR",
-            comp_filter("VEVENT",
-                prop_filter("UID", text_match(text=uid, collation="i;octet")))))
+        filter=caldav.comp_filter("VCALENDAR",
+            caldav.comp_filter("VEVENT",
+                caldav.prop_filter("UID", caldav.text_match(text=uid, collation="i;octet")))))
 
     for (href, status, propstat) in ret:
         if status == 'HTTP/1.1 404 Not Found':

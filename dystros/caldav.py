@@ -112,3 +112,53 @@ def freebusy_query(url, start, end, depth=None):
     with caldav.report(url, reqxml, depth) as f:
         assert f.status == 200, f.status
         return f.read()
+
+def _extend_inner_filter(et, inner_filter):
+    if inner_filter is None:
+        return
+    if not isinstance(inner_filter, list):
+        inner_filter = [inner_filter]
+    for f in inner_filter:
+        et.append(f)
+
+
+def comp_filter(name, inner_filter=None):
+    """Create a component filter.
+
+    :param name: Component name to filter on
+    :param inner_filter: Optional filter for contents
+    :return: A filter
+    """
+    ret = ET.Element('{urn:ietf:params:xml:ns:caldav}comp-filter')
+    if name is not None:
+        ret.set('name', name)
+    _extend_inner_filter(ret, inner_filter)
+    return ret
+
+
+def prop_filter(name, inner_filter=None):
+    """Create a property filter.
+
+    :param name: Property name to filter on
+    :param inner_filter: Optional filter for contents
+    :return: A filter
+    """
+    ret = ET.Element('{urn:ietf:params:xml:ns:caldav}prop-filter')
+    if name is not None:
+        ret.set('name', name)
+    _extend_inner_filter(ret, inner_filter)
+    return ret
+
+
+def text_match(text, collation=None):
+    """Match against a specific string.
+
+    :param text: Text to match against
+    :param collation: Optional collation
+    :return: A filter
+    """
+    ret = ET.Element('{urn:ietf:params:xml:ns:caldav}text-match')
+    ret.text = text
+    if collation is not None:
+        ret.set('collation', collation)
+    return ret

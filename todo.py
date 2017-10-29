@@ -33,7 +33,7 @@ parser = optparse.OptionParser("travel")
 parser.add_option_group(utils.CalendarOptionGroup(parser))
 opts, args = parser.parse_args()
 
-cals = utils.get_all_calendars(opts.url, filter=utils.comp_filter("VCALENDAR", utils.comp_filter("VTODO")))
+cals = utils.get_all_calendars(opts.url, filter=caldav.comp_filter("VCALENDAR", caldav.comp_filter("VTODO")))
 
 vtodos = list(filters.extract_vtodos(cals))
 

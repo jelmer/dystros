@@ -28,7 +28,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from dystros import filters, utils
+from dystros import caldav, filters, utils
 
 parser = optparse.OptionParser("printday DATE")
 parser.add_option_group(utils.CalendarOptionGroup(parser))
@@ -40,7 +40,7 @@ if len(args) < 1:
 
 day = utils.asdate(datetime.datetime.strptime(args[0], "%Y%m%d"))
 
-cals = utils.get_all_props(opts.url, filter=utils.comp_filter("VCALENDAR", utils.comp_filter("VEVENT")))
+cals = utils.get_all_props(opts.url, filter=caldav.comp_filter("VCALENDAR", caldav.comp_filter("VEVENT")))
 
 vevents = list(filters.extract_vevents(cals))
 vevents.sort(key=utils.keyEvent)
