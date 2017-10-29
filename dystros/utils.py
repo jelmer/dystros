@@ -33,6 +33,7 @@ import os
 import urllib.parse
 import urllib.request
 
+from dystros import caldav
 from dystros.config import GetConfig
 
 def install_opener():
@@ -147,14 +148,6 @@ def keyTodo(a):
     return (priority, due_date, due_time, a['SUMMARY'])
 
 
-def report(url, req, depth=None):
-    if depth is None:
-        depth = '1'
-    req = urllib.request.Request(url=url, headers={'Content-Type': 'application/xml'}, data=ET.tostring(req), method='REPORT')
-    req.add_header('Depth', depth)
-    return urllib.request.urlopen(req)
-
-
 def _extend_inner_filter(et, inner_filter):
     if inner_filter is None:
         return
@@ -219,7 +212,7 @@ def calendar_query(url, props, filter=None, depth=None):
         filterxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}filter')
         filterxml.append(filter)
 
-    with report(url, reqxml, depth) as f:
+    with caldav.report(url, reqxml, depth) as f:
         assert f.status == 207, f.status
         respxml = xmlparse(f.read())
     return multistat_extract_responses(respxml)
@@ -349,6 +342,6 @@ def get_freebusy(url, start, end, depth=None):
         propxml.set('start', vDDDTypes(start).to_ical().decode('ascii'))
     if end is not None:
         propxml.set('end', vDDDTypes(end).to_ical().decode('ascii'))
-    with report(url, reqxml, depth) as f:
+    with caldav.report(url, reqxml, depth) as f:
         assert f.status == 200, f.status
         return f.read()
