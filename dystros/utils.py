@@ -293,14 +293,3 @@ def get_vevent_by_uid(url, uid, depth='1'):
         return (href, etag, Calendar.from_ical(data))
     raise KeyError(uid)
 
-
-def get_freebusy(url, start, end, depth=None):
-    reqxml = ET.Element('{urn:ietf:params:xml:ns:caldav}free-busy-query')
-    propxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}time-range')
-    if start is not None:
-        propxml.set('start', vDDDTypes(start).to_ical().decode('ascii'))
-    if end is not None:
-        propxml.set('end', vDDDTypes(end).to_ical().decode('ascii'))
-    with caldav.report(url, reqxml, depth) as f:
-        assert f.status == 200, f.status
-        return f.read()

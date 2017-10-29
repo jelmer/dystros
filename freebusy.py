@@ -35,4 +35,4 @@ parser = optparse.OptionParser("travel")
 parser.add_option_group(utils.CalendarOptionGroup(parser))
 opts, args = parser.parse_args()
 
-sys.stdout.buffer.write(utils.get_freebusy(opts.url, start=datetime.datetime(2000, 1, 1).replace(tzinfo=pytz.timezone('UTC')), end=datetime.datetime.utcnow().replace(tzinfo=pytz.timezone('UTC'))))
+sys.stdout.buffer.write(utils.freebusy_query(opts.url, start=datetime.datetime(2000, 1, 1).replace(tzinfo=pytz.timezone('UTC')), end=datetime.datetime.utcnow().replace(tzinfo=pytz.timezone('UTC'))))

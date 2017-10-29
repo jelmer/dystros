@@ -93,3 +93,22 @@ def calendar_query(url, props, filter=None, depth=None):
         assert f.status == 207, f.status
         respxml = xmlparse(f.read())
     return multistat_extract_responses(respxml)
+
+
+def freebusy_query(url, start, end, depth=None):
+    """Query freebusy information.
+
+    :param start: optional start time
+    :param end: Optional end time
+    :param depth: Optional depth
+    :return: Freebusy results (as string)
+    """
+    reqxml = ET.Element('{urn:ietf:params:xml:ns:caldav}free-busy-query')
+    propxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}time-range')
+    if start is not None:
+        propxml.set('start', vDDDTypes(start).to_ical().decode('ascii'))
+    if end is not None:
+        propxml.set('end', vDDDTypes(end).to_ical().decode('ascii'))
+    with caldav.report(url, reqxml, depth) as f:
+        assert f.status == 200, f.status
+        return f.read()
