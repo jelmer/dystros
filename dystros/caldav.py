@@ -36,3 +36,60 @@ def report(url, req, depth=None):
     req.add_header('Depth', depth)
     return urllib.request.urlopen(req)
 
+
+def expect_tag(element, name):
+    # TODO(jelmer)
+    if isinstance(name, str):
+        assert element.tag == name, "expected tag %s, got %s: %r" % (name, element.tag, element)
+    else:
+        assert element.tag in name, "expected one of %s, got %s: %r" % (', '.join(name), element.tag, element)
+
+
+def multistat_extract_responses(multistatus):
+    """Extract response from a multistat element.
+
+    :param multistatus: Multistat element
+    :return: Iterator over (href, status, propstat) tuples
+    """
+    expect_tag(multistatus, '{DAV:}multistatus')
+    for response in multistatus:
+        expect_tag(response, '{DAV:}response')
+        href = None
+        status = None
+        propstat = None
+        for responsesub in response:
+            expect_tag(responsesub, ('{DAV:}href', '{DAV:}propstat', '{DAV:}status'))
+            if responsesub.tag == '{DAV:}href':
+                href = responsesub.text
+            elif responsesub.tag == '{DAV:}propstat':
+                propstat = responsesub
+            elif responsesub.tag == '{DAV:}status':
+                status = responsesub.text
+        yield (href, status, propstat)
+
+
+def calendar_query(url, props, filter=None, depth=None):
+    """Send a calendar-query request.
+
+    :param url: URL to request against
+    :param props: Properties to request (as XML elements or strings
+    :param filter: Optional filter to apply
+    :param depth: Optional Depth
+    :return: Multistat response
+    """
+    reqxml = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-query')
+    propxml = ET.SubElement(reqxml, '{DAV:}prop')
+    for prop in props:
+        if isinstance(prop, str):
+            ET.SubElement(propxml, prop)
+        else:
+            propxml.append(prop)
+
+    if filter is not None:
+        filterxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}filter')
+        filterxml.append(filter)
+
+    with report(url, reqxml, depth) as f:
+        assert f.status == 207, f.status
+        respxml = xmlparse(f.read())
+    return multistat_extract_responses(respxml)

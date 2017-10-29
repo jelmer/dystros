@@ -180,55 +180,16 @@ def text_match(text, collation):
     return ret
 
 
-def multistat_extract_responses(multistatus):
-    assert multistatus.tag == '{DAV:}multistatus', repr(multistatus)
-    for response in multistatus:
-        assert response.tag == '{DAV:}response'
-        href = None
-        status = None
-        propstat = None
-        for responsesub in response:
-            if responsesub.tag == '{DAV:}href':
-                href = responsesub.text
-            elif responsesub.tag == '{DAV:}propstat':
-                propstat = responsesub
-            elif responsesub.tag == '{DAV:}status':
-                status = responsesub.text
-            else:
-                assert False, 'invalid %r' % responsesub.tag
-        yield (href, status, propstat)
-
-
-def calendar_query(url, props, filter=None, depth=None):
-    reqxml = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-query')
-    propxml = ET.SubElement(reqxml, '{DAV:}prop')
-    for prop in props:
-        if isinstance(prop, str):
-            ET.SubElement(propxml, prop)
-        else:
-            propxml.append(prop)
-
-    if filter is not None:
-        filterxml = ET.SubElement(reqxml, '{urn:ietf:params:xml:ns:caldav}filter')
-        filterxml.append(filter)
-
-    with caldav.report(url, reqxml, depth) as f:
-        assert f.status == 207, f.status
-        respxml = xmlparse(f.read())
-    return multistat_extract_responses(respxml)
-
-
 def get_all_calendars(url, depth=None, filter=None):
-    for (href, status, propstat) in calendar_query(
+    for (href, status, propstat) in caldav.calendar_query(
             url, ['{DAV:}getetag', '{urn:ietf:params:xml:ns:caldav}calendar-data'], filter):
         by_status = {}
         for propstatsub in propstat:
+            expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
             if propstatsub.tag == '{DAV:}status':
                 status = propstatsub.text
             elif propstatsub.tag == '{DAV:}prop':
                 by_status[status] = propstatsub
-            else:
-                assert False, 'invalid %r' % propstatsub.tag
         data = None
         for prop in by_status.get('HTTP/1.1 200 OK', []):
             if prop.tag == '{urn:ietf:params:xml:ns:caldav}calendar-data':
@@ -279,7 +240,7 @@ def getprop(url, props, depth=None):
     with urllib.request.urlopen(req) as f:
         assert f.status == 207, f.status
         respxml = xmlparse(f.read())
-    return multistat_extract_responses(respxml)
+    return caldav.multistat_extract_responses(respxml)
 
 
 def get_addmember_url(url):
@@ -288,13 +249,12 @@ def get_addmember_url(url):
             raise KeyError(url)
         by_status = {}
         for propstatsub in propstat:
+            expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
             if propstatsub.tag == '{DAV:}status':
                 if propstatsub.text == 'HTTP/1.1 404 Not Found':
                     raise KeyError(uid)
             elif propstatsub.tag == '{DAV:}prop':
                 by_status[status] = propstatsub
-            else:
-                assert False, 'invalid %r' % propstatsub.tag
         for prop in by_status.get('HTTP/1.1 200 OK', []):
             if prop.tag == '{DAV:}add-member':
                 return urllib.parse.urljoin(url, list(prop)[0].text)
@@ -305,7 +265,7 @@ def get_vevent_by_uid(url, uid, depth='1'):
     uidprop = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-data')
     uidprop.set('name', 'UID')
     dataprop = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-data')
-    ret = calendar_query(
+    ret = caldav.calendar_query(
         url, props=[uidprop, dataprop, '{DAV:}getetag'], depth=depth,
         filter=comp_filter("VCALENDAR",
             comp_filter("VEVENT",
@@ -316,13 +276,12 @@ def get_vevent_by_uid(url, uid, depth='1'):
             raise KeyError(uid)
         by_status = {}
         for propstatsub in propstat:
+            expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
             if propstatsub.tag == '{DAV:}status':
                 if propstatsub.text == 'HTTP/1.1 404 Not Found':
                     raise KeyError(uid)
             elif propstatsub.tag == '{DAV:}prop':
                 by_status[status] = propstatsub
-            else:
-                assert False, 'invalid %r' % propstatsub.tag
         etag = None
         data = None
         for prop in by_status.get('HTTP/1.1 200 OK', []):
