@@ -114,5 +114,4 @@ ev = Event(**props)
 c = Calendar()
 c.add_component(ev)
 
-addmember_url = utils.get_addmember_url(opts.url)
-utils.post(addmember_url, 'text/calendar', c.to_ical())
+utils.add_member(opts.url, 'text/calendar', c.to_ical())

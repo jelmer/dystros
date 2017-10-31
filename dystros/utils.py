@@ -261,3 +261,13 @@ def get_vevent_by_uid(url, uid, depth='1'):
         return (href, etag, Calendar.from_ical(data))
     raise KeyError(uid)
 
+
+def add_member(url, content_type, content):
+    """Add a new member to a collection.
+
+    :param url: URL of collection
+    :param content_type; Content type of new member
+    :param content: Content (as bytes)
+    """
+    addmember_url = get_addmember_url(url)
+    post(addmember_url, content_type, content)
