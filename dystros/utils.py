@@ -166,10 +166,11 @@ def get(url):
         return (f.get_header('ETag'), f.read())
 
 
-def put(url, data, if_match=None):
+def put(url, content_type, data, if_match=None):
     req = urllib.request.Request(url=url, data=data, method='PUT')
     if if_match is not None:
-        req.add_header('If-None-Match', ', '.join(if_match))
+        req.add_header('If-Match', ', '.join(if_match))
+    req.add_header('Content-Type', content_type)
     with urllib.request.urlopen(req) as f:
         pass
     assert f.status in (201, 204, 200), f.status
@@ -178,7 +179,7 @@ def put(url, data, if_match=None):
 def post(url, content_type, data, if_match=None):
     req = urllib.request.Request(url=url, data=data, method='POST')
     if if_match is not None:
-        req.add_header('If-None-Match', ', '.join(if_match))
+        req.add_header('If-Match', ', '.join(if_match))
     req.add_header('Content-Type', content_type)
     with urllib.request.urlopen(req) as f:
         pass

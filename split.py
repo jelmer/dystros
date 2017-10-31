@@ -119,7 +119,7 @@ for (uid, ev) in items.items():
            utils.add_member(url, 'text/calendar', out.to_ical())
         else:
            changed += 1
-           utils.put(url, out.to_ical(), if_match=if_match)
+           utils.put(url, 'text/calendar', out.to_ical(), if_match=if_match)
 
 logger.info('Processed %s. Seen %d, updated %d, new %d', opts.prefix,
              seen, changed, added)
