@@ -20,6 +20,15 @@
 # MA  02110-1301, USA.
 
 
+from defusedxml.ElementTree import fromstring as xmlparse
+# Hmm, defusedxml doesn't have XML generation functions? :(
+from xml.etree import ElementTree as ET
+
+import urllib.parse
+import urllib.request
+
+
+
 def report(url, req, depth=None):
     """Send a CalDAV report request.
 
@@ -62,7 +71,16 @@ def multistat_extract_responses(multistatus):
             if responsesub.tag == '{DAV:}href':
                 href = responsesub.text
             elif responsesub.tag == '{DAV:}propstat':
-                propstat = responsesub
+                propstat = []
+                for propstatsub in responsesub:
+                    expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
+                for propstatsub in responsesub:
+                    if propstatsub.tag == '{DAV:}status':
+                        prop_status = propstatsub.text
+                for propstatsub in responsesub:
+                    if propstatsub.tag == '{DAV:}prop':
+                        for actualprop in propstatsub:
+                            propstat.append((actualprop, prop_status))
             elif responsesub.tag == '{DAV:}status':
                 status = responsesub.text
         yield (href, status, propstat)

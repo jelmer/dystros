@@ -151,15 +151,8 @@ def keyTodo(a):
 def get_all_calendars(url, depth=None, filter=None):
     for (href, status, propstat) in caldav.calendar_query(
             url, ['{DAV:}getetag', '{urn:ietf:params:xml:ns:caldav}calendar-data'], filter):
-        by_status = {}
-        for propstatsub in propstat:
-            expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
-            if propstatsub.tag == '{DAV:}status':
-                status = propstatsub.text
-            elif propstatsub.tag == '{DAV:}prop':
-                by_status[status] = propstatsub
         data = None
-        for prop in by_status.get('HTTP/1.1 200 OK', []):
+        for prop, prop_status in propstat:
             if prop.tag == '{urn:ietf:params:xml:ns:caldav}calendar-data':
                 data = prop.text
         assert data is not None, "data missing for %r" % href
@@ -203,7 +196,7 @@ def getprop(url, props, depth=None):
 
     if depth is None:
         depth = '0'
-    req = urllib.request.Request(url=url, data=ET.tostring(reqxml), method='PROPFIND')
+    req = urllib.request.Request(url=url, headers={'Content-Type': 'application/xml'}, data=ET.tostring(reqxml), method='PROPFIND')
     req.add_header('Depth', depth)
     with urllib.request.urlopen(req) as f:
         assert f.status == 207, f.status
@@ -212,20 +205,13 @@ def getprop(url, props, depth=None):
 
 
 def get_addmember_url(url):
-    for (href, status, propstat) in getprop(url, ['{DAV:}add-member']):
-        if status == 'HTTP/1.1 404 Not Found':
+    for (href, href_status, propstat) in getprop(url, ['{DAV:}add-member']):
+        if href_status == 'HTTP/1.1 404 Not Found':
             raise KeyError(url)
-        by_status = {}
-        for propstatsub in propstat:
-            expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
-            if propstatsub.tag == '{DAV:}status':
-                if propstatsub.text == 'HTTP/1.1 404 Not Found':
-                    raise KeyError(uid)
-            elif propstatsub.tag == '{DAV:}prop':
-                by_status[status] = propstatsub
-        for prop in by_status.get('HTTP/1.1 200 OK', []):
+        for prop, propstatus in propstat:
             if prop.tag == '{DAV:}add-member':
-                return urllib.parse.urljoin(url, list(prop)[0].text)
+                if propstatus == 'HTTP/1.1 200 OK':
+                    return urllib.parse.urljoin(url, list(prop)[0].text)
     raise KeyError(url)
 
 
@@ -242,17 +228,9 @@ def get_vevent_by_uid(url, uid, depth='1'):
     for (href, status, propstat) in ret:
         if status == 'HTTP/1.1 404 Not Found':
             raise KeyError(uid)
-        by_status = {}
-        for propstatsub in propstat:
-            expect_tag(propstatsub, ('{DAV:}status', '{DAV:}prop'))
-            if propstatsub.tag == '{DAV:}status':
-                if propstatsub.text == 'HTTP/1.1 404 Not Found':
-                    raise KeyError(uid)
-            elif propstatsub.tag == '{DAV:}prop':
-                by_status[status] = propstatsub
         etag = None
         data = None
-        for prop in by_status.get('HTTP/1.1 200 OK', []):
+        for prop, prop_status in propstat:
             if prop.tag == '{urn:ietf:params:xml:ns:caldav}calendar-data':
                 data = prop.text
             if prop.tag == '{DAV:}getetag':

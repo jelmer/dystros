@@ -21,7 +21,6 @@
 
 
 
-from dulwich import porcelain
 import datetime
 import logging
 import optparse
