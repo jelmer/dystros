@@ -106,19 +106,20 @@ for (uid, ev) in items.items():
     for c in other:
         out.add_component(c)
     if opts.category:
-        if isinstance(ev.get('categories', ''), vText):
-            ev['categories'] = [ev['categories']]
+        if isinstance(ev.get('CATEGORIES', ''), vText):
+            ev['CATEGORIES'] = [ev['CATEGORIES']]
         ev.setdefault('categories', []).append(vText(opts.category))
-    if opts.status and not 'status' in ev:
-        ev['status'] = opts.status.upper()
+    if opts.status and not 'STATUS' in ev:
+        ev['STATUS'] = opts.status.upper()
     out.add_component(ev)
     write = hasChanged(old, out)
     if write:
         if old is None:
            added += 1
+           utils.add_member(url, 'text/calendar', out.to_ical())
         else:
            changed += 1
-        utils.put(url, out.to_ical(), if_match=if_match)
+           utils.put(url, out.to_ical(), if_match=if_match)
 
 logger.info('Processed %s. Seen %d, updated %d, new %d', opts.prefix,
              seen, changed, added)
