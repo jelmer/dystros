@@ -90,12 +90,9 @@ added = 0
 for (uid, ev) in items.items():
     seen += 1
     try:
-        (href, etag, old) = utils.get_vevent_by_uid(opts.url, uid)
+        (href, etag, old) = utils.get_by_uid(opts.url, "VEVENT", uid)
     except KeyError:
-        if_match = None
-        fname = "%s-%s.ics" % (opts.prefix, uid.replace("/", ""))
         old = None
-        url = urllib.parse.urljoin(opts.url, fname)
     else:
         if_match = [etag]
         url = urllib.parse.urljoin(opts.url, href)

@@ -216,14 +216,14 @@ def get_addmember_url(url):
     raise KeyError(url)
 
 
-def get_vevent_by_uid(url, uid, depth='1'):
+def get_by_uid(url, component, uid, depth='1'):
     uidprop = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-data')
     uidprop.set('name', 'UID')
     dataprop = ET.Element('{urn:ietf:params:xml:ns:caldav}calendar-data')
     ret = caldav.calendar_query(
         url, props=[uidprop, dataprop, '{DAV:}getetag'], depth=depth,
         filter=caldav.comp_filter("VCALENDAR",
-            caldav.comp_filter("VEVENT",
+            caldav.comp_filter(component,
                 caldav.prop_filter("UID", caldav.text_match(text=uid, collation="i;octet")))))
 
     for (href, status, propstat) in ret:
