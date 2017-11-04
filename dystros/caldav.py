@@ -180,3 +180,43 @@ def text_match(text, collation=None):
     if collation is not None:
         ret.set('collation', collation)
     return ret
+
+
+def getprop(url, props, depth=None):
+    """Retrieve properties on a URL or set of URLs.
+
+    :param url: URL to query
+    :param props: List of properties to retrieve
+    :param depth: Optional depth
+    :return: See `multistat_extract_responses`
+    """
+    reqxml = ET.Element('{DAV:}propfind')
+    propxml = ET.SubElement(reqxml, '{DAV:}prop')
+    for prop in props:
+        if isinstance(prop, str):
+            ET.SubElement(propxml, prop)
+        else:
+            propxml.append(prop)
+
+    if depth is None:
+        depth = '0'
+    req = urllib.request.Request(url=url, headers={'Content-Type': 'application/xml'}, data=ET.tostring(reqxml), method='PROPFIND')
+    req.add_header('Depth', depth)
+    with urllib.request.urlopen(req) as f:
+        assert f.status == 207, f.status
+        respxml = xmlparse(f.read())
+    return multistat_extract_responses(respxml)
+
+
+def get_current_user_principal(url):
+    """Get the current user principal path.
+
+    :param url: URL to fetch from
+    :return: Current user principal
+    """
+    for href, href_status, propstat in getprop(url, ['{DAV:}current-user-principal']):
+        expect_tag(propstat[0][0], '{DAV:}current-user-principal')
+        children = list(propstat[0][0])
+        expect_tag(children[0], '{DAV:}href')
+        return urllib.parse.urljoin(url, children[0].text)
+    raise KeyError

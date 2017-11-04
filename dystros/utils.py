@@ -186,27 +186,8 @@ def post(url, content_type, data, if_match=None):
     assert f.status in (201, 204, 200), f.status
 
 
-def getprop(url, props, depth=None):
-    reqxml = ET.Element('{DAV:}propfind')
-    propxml = ET.SubElement(reqxml, '{DAV:}prop')
-    for prop in props:
-        if isinstance(prop, str):
-            ET.SubElement(propxml, prop)
-        else:
-            propxml.append(prop)
-
-    if depth is None:
-        depth = '0'
-    req = urllib.request.Request(url=url, headers={'Content-Type': 'application/xml'}, data=ET.tostring(reqxml), method='PROPFIND')
-    req.add_header('Depth', depth)
-    with urllib.request.urlopen(req) as f:
-        assert f.status == 207, f.status
-        respxml = xmlparse(f.read())
-    return caldav.multistat_extract_responses(respxml)
-
-
 def get_addmember_url(url):
-    for (href, href_status, propstat) in getprop(url, ['{DAV:}add-member']):
+    for (href, href_status, propstat) in caldav.getprop(url, ['{DAV:}add-member']):
         if href_status == 'HTTP/1.1 404 Not Found':
             raise KeyError(url)
         for prop, propstatus in propstat:
@@ -250,3 +231,4 @@ def add_member(url, content_type, content):
     """
     addmember_url = get_addmember_url(url)
     post(addmember_url, content_type, content)
+
