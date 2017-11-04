@@ -41,13 +41,26 @@ state_map = {
         }
 
 for issue in gh.search_issues(query="assignee:jelmer"):
-    props = {'UID': issue.url,
-             "CLASS": "PUBLIC",
-             "DESCRIPTION": issue.body,
-             "URL": issue.html_url,
-             "SUMMARY": issue.title,
-             "X-GITHUB-URL": issue.url,
-             "STATUS": state_map[issue.state]}
+    try:
+        (href, etag, old) = utils.get_by_uid(flags.url, "VTODO", issue.url)
+    except KeyError:
+        etag = None
+        props = {'UID': issue.url, "CLASS": "PUBLIC"}
+    else:
+        for component in old.subcomponents:
+            if component.name == "VTODO":
+                props = component
+                break
+
+    todo = Todo(**props)
+    c = Calendar()
+    c.add_component(todo)
+
+    props["DESCRIPTION"] =  issue.body,
+    props["URL"] = issue.html_url
+    props["SUMMARY"] = issue.title
+    props["X-GITHUB-URL"] = issue.url
+    props["STATUS"] = state_map[issue.state]
     if issue.milestone and issue.milestone.url:
         props["X-MILESTONE"] = issue.milestone.url
     if issue.created_at:
@@ -56,18 +69,13 @@ for issue in gh.search_issues(query="assignee:jelmer"):
         props["COMPLETED"] = vDatetime(issue.closed_at)
     for label in issue.labels:
         props["X-LABEL"] = label.name
-    todo = Todo(**props)
 
-    c = Calendar()
-    c.add_component(todo)
-    try:
-        (href, etag, old) = utils.get_by_uid(flags.url, "VTODO", props["UID"])
-    except KeyError:
+    if etag is None:
         print("Adding todo item for %r" % issue.title)
         utils.add_member(flags.url, 'text/calendar', c.to_ical())
     else:
         if_match = [etag]
         url = urllib.parse.urljoin(flags.url, href)
-        if c.to_ical() != old:
+        if c != old:
             print("Updating todo item for %r" % issue.title)
             utils.put(url, 'text/calendar', c.to_ical(), if_match=if_match)
