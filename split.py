@@ -113,7 +113,7 @@ for (uid, ev) in items.items():
     if write:
         if old is None:
            added += 1
-           utils.add_member(url, 'text/calendar', out.to_ical())
+           utils.add_member(opts.url, 'text/calendar', out.to_ical())
         else:
            changed += 1
            utils.put(url, 'text/calendar', out.to_ical(), if_match=if_match)
