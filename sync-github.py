@@ -46,36 +46,36 @@ for issue in gh.search_issues(query="assignee:jelmer"):
     except KeyError:
         etag = None
         props = {'UID': issue.url, "CLASS": "PUBLIC"}
+        todo = Todo(**props)
+        new = Calendar()
+        new.add_component(todo)
     else:
+        new = Calendar.from_ical(old.to_ical())
         for component in old.subcomponents:
             if component.name == "VTODO":
-                props = component
+                todo = component
                 break
 
-    todo = Todo(**props)
-    c = Calendar()
-    c.add_component(todo)
-
-    props["DESCRIPTION"] =  issue.body,
-    props["URL"] = issue.html_url
-    props["SUMMARY"] = issue.title
-    props["X-GITHUB-URL"] = issue.url
-    props["STATUS"] = state_map[issue.state]
+    todo["DESCRIPTION"] =  issue.body,
+    todo["URL"] = issue.html_url
+    todo["SUMMARY"] = "%s: %s" % (issue.repository.name, issue.title)
+    todo["X-GITHUB-URL"] = issue.url
+    todo["STATUS"] = state_map[issue.state]
     if issue.milestone and issue.milestone.url:
-        props["X-MILESTONE"] = issue.milestone.url
+        todo["X-MILESTONE"] = issue.milestone.url
     if issue.created_at:
-        props["CREATED"] = vDatetime(issue.created_at)
+        todo["CREATED"] = vDatetime(issue.created_at)
     if issue.closed_at:
-        props["COMPLETED"] = vDatetime(issue.closed_at)
+        todo["COMPLETED"] = vDatetime(issue.closed_at)
     for label in issue.labels:
-        props["X-LABEL"] = label.name
+        todo["X-LABEL"] = label.name
 
     if etag is None:
         print("Adding todo item for %r" % issue.title)
-        utils.add_member(flags.url, 'text/calendar', c.to_ical())
+        utils.add_member(flags.url, 'text/calendar', new.to_ical())
     else:
         if_match = [etag]
         url = urllib.parse.urljoin(flags.url, href)
-        if c != old:
+        if new != old:
             print("Updating todo item for %r" % issue.title)
-            utils.put(url, 'text/calendar', c.to_ical(), if_match=if_match)
+            utils.put(url, 'text/calendar', new.to_ical(), if_match=if_match)
