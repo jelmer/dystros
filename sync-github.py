@@ -25,6 +25,7 @@ import github
 import argparse
 from icalendar.cal import Calendar, Todo
 from icalendar.prop import vDatetime
+from dystros.config import GetConfig
 from dystros import utils, version_string
 import urllib.parse
 
@@ -33,7 +34,15 @@ utils.add_calendar_arguments(parser)
 
 flags = parser.parse_args()
 
-gh = github.MainClass.Github()
+config = GetConfig()
+kwargs = {}
+try:
+    kwargs['client_secret'] = config['github_client_secret']
+    kwargs['client_id'] = config['github_client_id']
+except KeyError:
+    pass
+
+gh = github.MainClass.Github(**kwargs, user_agent='dystros')
 
 state_map = {
         "open": "NEEDS-ACTION",
