@@ -30,7 +30,7 @@ from icalendar.cal import Calendar
 from icalendar.prop import vUri, vText
 import sys
 
-from dystros import utils
+from dystros import caldav, utils
 
 def StripStamps(c):
     if c is None:
@@ -58,10 +58,17 @@ logger.addHandler(ch)
 
 parser = optparse.OptionParser("split")
 parser.add_option_group(utils.CalendarOptionGroup(parser))
+parser.add_option("--invite", dest="invite", action="store_true", help="Store as invite.")
 parser.add_option("--prefix", dest="prefix", default="unknown", help="Filename prefix")
 parser.add_option('--category', dest='category', default=None, help="Category to add.")
 parser.add_option('--status', dest='status', type="choice", choices=["", "tentative", "confirmed"], default=None, help="Status to set.")
 opts, args = parser.parse_args()
+
+if opts.invite:
+    cup = caldav.get_current_user_principal(opts.url)
+    target_collection_url = utils.get_inbox_url(cup))
+else:
+    target_collection_url = opts.url
 
 try:
     import_url = args[0]
@@ -90,12 +97,12 @@ added = 0
 for (uid, ev) in items.items():
     seen += 1
     try:
-        (href, etag, old) = utils.get_by_uid(opts.url, "VEVENT", uid)
+        (href, etag, old) = utils.get_by_uid(target_collection_url, "VEVENT", uid)
     except KeyError:
         old = None
     else:
         if_match = [etag]
-        url = urllib.parse.urljoin(opts.url, href)
+        url = urllib.parse.urljoin(target_collection_url, href)
     out = Calendar()
     if import_url is not None:
         out['X-IMPORTED-FROM-URL'] = vUri(import_url)
@@ -113,7 +120,7 @@ for (uid, ev) in items.items():
     if write:
         if old is None:
            added += 1
-           utils.add_member(opts.url, 'text/calendar', out.to_ical())
+           utils.add_member(target_collection_url, 'text/calendar', out.to_ical())
         else:
            changed += 1
            utils.put(url, 'text/calendar', out.to_ical(), if_match=if_match)

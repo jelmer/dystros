@@ -232,3 +232,8 @@ def add_member(url, content_type, content):
     addmember_url = get_addmember_url(url)
     post(addmember_url, content_type, content)
 
+
+def get_inbox_url(principal):
+    for href, status, propstat in caldav.getprop(principal, ["{urn:ietf:params:xml:ns:caldav}schedule-inbox-URL"]):
+        return urllib.parse.urljoin(principal, propstat[0][0][0].text)
+    return None
