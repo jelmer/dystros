@@ -39,10 +39,6 @@ launchpad = Launchpad.login_anonymously(
         'dystros', 'production',
         os.path.join(xdg_cache_home, 'dystros'), version='devel')
 
-state_map = {
-        "open": "NEEDS-ACTION",
-        "closed": "COMPLETED",
-        }
 
 for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
     try:
@@ -72,6 +68,12 @@ for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
         todo["CREATED"] = vDatetime(task.date_created)
     if task.date_closed:
         todo["COMPLETED"] = vDatetime(task.date_closed)
+
+    # TODO(jelmer): Set RELATED-TO (SIBLING) based on task.related_tasks
+
+    # TODO(jelmer): Set COMMENT field based on task.messages
+
+    todo["CATEGORIES"] = task.bug.tags.split(',')
 
     todo["DESCRIPTION"] =  task.bug.description
 
