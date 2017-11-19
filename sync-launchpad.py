@@ -45,7 +45,7 @@ for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
         (href, etag, old) = utils.get_by_uid(flags.url, "VTODO", task.self_link)
     except KeyError:
         etag = None
-        props = {'UID': task.self_link, "CLASS": "PUBLIC"}
+        props = {'UID': task.self_link}
         todo = Todo(**props)
         new = Calendar()
         new.add_component(todo)
@@ -56,6 +56,7 @@ for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
                 todo = component
                 break
 
+    todo["CLASS"] = "PUBLIC"
     todo["URL"] = task.web_link
     todo["SUMMARY"] = "%s: %s" % (task.target.name, task.bug.title)
 

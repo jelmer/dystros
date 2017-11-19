@@ -113,7 +113,7 @@ for (uid, ev) in items.items():
         if isinstance(ev.get('CATEGORIES', ''), vText):
             ev['CATEGORIES'] = [ev['CATEGORIES']]
         ev.setdefault('categories', []).append(vText(opts.category))
-    if opts.status and not 'STATUS' in ev:
+    if opts.status and 'STATUS' not in ev:
         ev['STATUS'] = opts.status.upper()
     out.add_component(ev)
     write = hasChanged(old, out)

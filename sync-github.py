@@ -54,7 +54,7 @@ for issue in gh.search_issues(query="assignee:jelmer"):
         (href, etag, old) = utils.get_by_uid(flags.url, "VTODO", issue.url)
     except KeyError:
         etag = None
-        props = {'UID': issue.url, "CLASS": "PUBLIC"}
+        props = {'UID': issue.url}
         todo = Todo(**props)
         new = Calendar()
         new.add_component(todo)
@@ -65,6 +65,7 @@ for issue in gh.search_issues(query="assignee:jelmer"):
                 todo = component
                 break
 
+    todo["CLASS"] = "PUBLIC"
     todo["DESCRIPTION"] =  issue.body,
     todo["URL"] = issue.html_url
     todo["SUMMARY"] = "%s: %s" % (issue.repository.name, issue.title)
