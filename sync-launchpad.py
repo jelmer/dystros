@@ -27,6 +27,7 @@ from xdg.BaseDirectory import xdg_cache_home
 import argparse
 from icalendar.cal import Calendar, Todo
 from icalendar.prop import vDatetime
+import os
 from dystros import utils, version_string
 import urllib.parse
 
@@ -35,32 +36,43 @@ utils.add_calendar_arguments(parser)
 
 flags = parser.parse_args()
 
-launchpad = Launchpad.login_anonymously(
+launchpad = Launchpad.get_token_and_login(
         'dystros', 'production',
-        os.path.join(xdg_cache_home, 'dystros'), version='devel')
+        os.path.join(xdg_cache_home, 'dystros'))
 
+STATUSES = [
+    'New',
+    'Incomplete',
+    'Confirmed',
+    'Triaged',
+    'In Progress',
+    'Fix Committed',
+    'Fix Released',
+    'Won\'t Fix',
+]
 
-for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
-    (old, todo, new, href, etag) = utils.create_or_update_calendar_item(flags.url, "VTODO", task.self_link)
+for task in launchpad.bugs.searchTasks(assignee=launchpad.me, status=STATUSES):
+    print("Processing %s" % task.bug.id)
+    (old, new, href, etag, todo) = utils.create_or_update_calendar_item(flags.url, "VTODO", task.self_link)
     todo["CLASS"] = "PUBLIC"
     todo["URL"] = task.web_link
     todo["SUMMARY"] = "%s: %s" % (task.target.name, task.bug.title)
 
-    if task.is_completed:
+    if task.is_complete:
         todo["STATUS"] = "COMPLETED"
     else:
         todo["STATUS"] = "NEEDS-ACTION"
 
-    if task.date_created:
+    if task.date_created and False:
         todo["CREATED"] = vDatetime(task.date_created)
-    if task.date_closed:
+    if task.date_closed and False:
         todo["COMPLETED"] = vDatetime(task.date_closed)
 
     # TODO(jelmer): Set RELATED-TO (SIBLING) based on task.related_tasks
 
     # TODO(jelmer): Set COMMENT field based on task.messages
 
-    todo["CATEGORIES"] = task.bug.tags.split(',')
+    todo["CATEGORIES"] = task.bug.tags
 
     todo["DESCRIPTION"] =  task.bug.description
 
@@ -69,6 +81,6 @@ for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
         utils.add_member(flags.url, 'text/calendar', new.to_ical())
     else:
         url = urllib.parse.urljoin(flags.url, href)
-        if new != old:
+        if new.to_ical() != old.to_ical():
             print("Updating todo item for %r" % task.bug.title)
             utils.put(url, 'text/calendar', new.to_ical(), if_match=[etag])

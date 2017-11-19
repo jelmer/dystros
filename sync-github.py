@@ -50,7 +50,7 @@ state_map = {
         }
 
 for issue in gh.search_issues(query="assignee:jelmer"):
-    (old, todo, new, href, etag) = utils.create_or_update_calendar_item(flags.url, "VTODO", issue.url)
+    (old, todo, new, href, etag, todo) = utils.create_or_update_calendar_item(flags.url, "VTODO", issue.url)
     todo["CLASS"] = "PUBLIC"
     todo["DESCRIPTION"] =  issue.body,
     todo["URL"] = issue.html_url

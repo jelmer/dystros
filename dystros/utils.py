@@ -26,7 +26,7 @@ from defusedxml.ElementTree import fromstring as xmlparse
 from xml.etree import ElementTree as ET
 
 import datetime
-from icalendar.cal import Calendar
+from icalendar.cal import Calendar, component_factory
 from icalendar.prop import vDDDTypes
 import optparse
 import os
@@ -249,18 +249,19 @@ def create_or_update_calendar_item(collection_url, component_name, uid):
         New items will have the first three elements set to None
     """
     try:
-        (href, etag, old) = utils.get_by_uid(collection_url, component_name, uid)
+        (href, etag, old) = get_by_uid(collection_url, component_name, uid)
     except KeyError:
         etag = None
         props = {'UID': uid}
-        todo = Todo(**props)
+        todo = component_factory[component_name](**props)
         old = None
+        href = None
         new = Calendar()
         new.add_component(todo)
     else:
         new = Calendar.from_ical(old.to_ical())
         for component in old.subcomponents:
-            if component.name == component_name
+            if component.name == component_name:
                 todo = component
                 break
-    return (old, new, href, etag)
+    return (old, new, href, etag, todo)

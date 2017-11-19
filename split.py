@@ -100,7 +100,7 @@ changed = 0
 added = 0
 for (uid, ev) in items.items():
     seen += 1
-    (old, todo, new, href, etag) = utils.create_or_update_calendar_item(
+    (old, todo, new, href, etag, ev) = utils.create_or_update_calendar_item(
         target_collection_url, "VEVENT", uid)
     out = Calendar()
     if import_url is not None:
