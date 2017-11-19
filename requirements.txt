@@ -2,6 +2,5 @@ github
 jinja2
 icalendar
 defusedxml
-github
 launchpadlib
 xdg
