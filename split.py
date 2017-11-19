@@ -64,9 +64,13 @@ parser.add_option('--category', dest='category', default=None, help="Category to
 parser.add_option('--status', dest='status', type="choice", choices=["", "tentative", "confirmed"], default=None, help="Status to set.")
 opts, args = parser.parse_args()
 
+cup = caldav.get_current_user_principal(opts.url)
+logging.info('Current user principal: %s', cup)
+inbox_url = utils.get_inbox_url(cup)
+logging.info('Inbox URL: %s', inbox_url)
+
 if opts.invite:
-    cup = caldav.get_current_user_principal(opts.url)
-    target_collection_url = utils.get_inbox_url(cup))
+    target_collection_url = inbox_url
 else:
     target_collection_url = opts.url
 
@@ -106,6 +110,9 @@ for (uid, ev) in items.items():
     out = Calendar()
     if import_url is not None:
         out['X-IMPORTED-FROM-URL'] = vUri(import_url)
+    # If this is not an iTIP request, then make it one.
+    if "METHOD" not in out and opts.invite:
+        out["METHOD"] = "REQUEST"
     out.update(list(orig.items()))
     for c in other:
         out.add_component(c)
