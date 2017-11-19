@@ -41,21 +41,7 @@ launchpad = Launchpad.login_anonymously(
 
 
 for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
-    try:
-        (href, etag, old) = utils.get_by_uid(flags.url, "VTODO", task.self_link)
-    except KeyError:
-        etag = None
-        props = {'UID': task.self_link}
-        todo = Todo(**props)
-        new = Calendar()
-        new.add_component(todo)
-    else:
-        new = Calendar.from_ical(old.to_ical())
-        for component in old.subcomponents:
-            if component.name == "VTODO":
-                todo = component
-                break
-
+    (old, todo, new, href, etag) = utils.create_or_update_calendar_item(flags.url, "VTODO", task.self_link)
     todo["CLASS"] = "PUBLIC"
     todo["URL"] = task.web_link
     todo["SUMMARY"] = "%s: %s" % (task.target.name, task.bug.title)
@@ -82,8 +68,7 @@ for task in launchpad.bugs.searchTasks(assignee=launchpad.me):
         print("Adding todo item for %r" % task.self_link)
         utils.add_member(flags.url, 'text/calendar', new.to_ical())
     else:
-        if_match = [etag]
         url = urllib.parse.urljoin(flags.url, href)
         if new != old:
             print("Updating todo item for %r" % task.bug.title)
-            utils.put(url, 'text/calendar', new.to_ical(), if_match=if_match)
+            utils.put(url, 'text/calendar', new.to_ical(), if_match=[etag])

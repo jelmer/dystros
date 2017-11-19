@@ -50,21 +50,7 @@ state_map = {
         }
 
 for issue in gh.search_issues(query="assignee:jelmer"):
-    try:
-        (href, etag, old) = utils.get_by_uid(flags.url, "VTODO", issue.url)
-    except KeyError:
-        etag = None
-        props = {'UID': issue.url}
-        todo = Todo(**props)
-        new = Calendar()
-        new.add_component(todo)
-    else:
-        new = Calendar.from_ical(old.to_ical())
-        for component in old.subcomponents:
-            if component.name == "VTODO":
-                todo = component
-                break
-
+    (old, todo, new, href, etag) = utils.create_or_update_calendar_item(flags.url, "VTODO", issue.url)
     todo["CLASS"] = "PUBLIC"
     todo["DESCRIPTION"] =  issue.body,
     todo["URL"] = issue.html_url
@@ -84,8 +70,7 @@ for issue in gh.search_issues(query="assignee:jelmer"):
         print("Adding todo item for %r" % issue.title)
         utils.add_member(flags.url, 'text/calendar', new.to_ical())
     else:
-        if_match = [etag]
         url = urllib.parse.urljoin(flags.url, href)
         if new != old:
             print("Updating todo item for %r" % issue.title)
-            utils.put(url, 'text/calendar', new.to_ical(), if_match=if_match)
+            utils.put(url, 'text/calendar', new.to_ical(), if_match=[etag])

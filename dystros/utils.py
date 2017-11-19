@@ -237,3 +237,30 @@ def get_inbox_url(principal):
     for href, status, propstat in caldav.getprop(principal, ["{urn:ietf:params:xml:ns:caldav}schedule-inbox-URL"]):
         return urllib.parse.urljoin(principal, propstat[0][0][0].text)
     return None
+
+
+def create_or_update_calendar_item(collection_url, component_name, uid):
+    """Create or update a calendar item by UID.
+
+    :param collection_url: URL of collection to search in
+    :param component_name: Component name (VTODO, VEVENT, etc)
+    :param uid: UID value
+    :return: (href, etag, old, new), where old and new are Calendar items
+        New items will have the first three elements set to None
+    """
+    try:
+        (href, etag, old) = utils.get_by_uid(collection_url, component_name, uid)
+    except KeyError:
+        etag = None
+        props = {'UID': uid}
+        todo = Todo(**props)
+        old = None
+        new = Calendar()
+        new.add_component(todo)
+    else:
+        new = Calendar.from_ical(old.to_ical())
+        for component in old.subcomponents:
+            if component.name == component_name
+                todo = component
+                break
+    return (old, new, href, etag)

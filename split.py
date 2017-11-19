@@ -100,13 +100,8 @@ changed = 0
 added = 0
 for (uid, ev) in items.items():
     seen += 1
-    try:
-        (href, etag, old) = utils.get_by_uid(target_collection_url, "VEVENT", uid)
-    except KeyError:
-        old = None
-    else:
-        if_match = [etag]
-        url = urllib.parse.urljoin(target_collection_url, href)
+    (old, todo, new, href, etag) = utils.create_or_update_calendar_item(
+        target_collection_url, "VEVENT", uid)
     out = Calendar()
     if import_url is not None:
         out['X-IMPORTED-FROM-URL'] = vUri(import_url)
@@ -130,7 +125,7 @@ for (uid, ev) in items.items():
            utils.add_member(target_collection_url, 'text/calendar', out.to_ical())
         else:
            changed += 1
-           utils.put(url, 'text/calendar', out.to_ical(), if_match=if_match)
+           utils.put(href, 'text/calendar', out.to_ical(), if_match=[etag])
 
 logger.info('Processed %s. Seen %d, updated %d, new %d', opts.prefix,
              seen, changed, added)
