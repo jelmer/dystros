@@ -28,9 +28,28 @@ from icalendar.prop import vDatetime
 from dystros.config import GetConfig
 from dystros import utils, version_string
 import urllib.parse
+from prometheus_client import CollectorRegistry, Counter, Gauge, push_to_gateway
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--prometheus', type=str, help='Prometheus host to connect to.', default=None)
 utils.add_calendar_arguments(parser)
+
+registry = CollectorRegistry()
+last_success_gauge = Gauge(
+    'job_last_success_unixtime',
+    'Last time a batch job successfully finished',
+    registry=registry)
+
+tasks_created_counter = Counter(
+    'tasks_created_count',
+    'Number of tasks that was created',
+    registry=registry)
+
+tasks_updated_counter = Counter(
+    'tasks_updated_count',
+    'Number of tasks that was updated',
+    registry=registry)
+
 
 flags = parser.parse_args()
 
@@ -69,8 +88,14 @@ for issue in gh.search_issues(query="assignee:jelmer"):
     if etag is None:
         print("Adding todo item for %r" % issue.title)
         utils.add_member(flags.url, 'text/calendar', new.to_ical())
+        tasks_created_counter.inc()
     else:
         url = urllib.parse.urljoin(flags.url, href)
         if new != old:
             print("Updating todo item for %r" % issue.title)
             utils.put(url, 'text/calendar', new.to_ical(), if_match=[etag])
+        tasks_updated_counter.inc()
+
+last_success_gauge.set_to_current_time()
+if args.prometheus:
+    push_to_gateway(args.prometheus, job='sync-github', registry=registry)
