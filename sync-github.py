@@ -69,9 +69,9 @@ state_map = {
         }
 
 for issue in gh.search_issues(query="assignee:jelmer"):
-    (old, todo, new, href, etag, todo) = utils.create_or_update_calendar_item(flags.url, "VTODO", issue.url)
+    (old, new, href, etag, todo) = utils.create_or_update_calendar_item(flags.url, "VTODO", issue.url)
     todo["CLASS"] = "PUBLIC"
-    todo["DESCRIPTION"] =  issue.body,
+    todo["DESCRIPTION"] =  issue.body
     todo["URL"] = issue.html_url
     todo["SUMMARY"] = "%s: %s" % (issue.repository.name, issue.title)
     todo["X-GITHUB-URL"] = issue.url
