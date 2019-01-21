@@ -97,5 +97,5 @@ for issue in gh.search_issues(query="assignee:jelmer"):
         tasks_updated_counter.inc()
 
 last_success_gauge.set_to_current_time()
-if args.prometheus:
-    push_to_gateway(args.prometheus, job='sync-github', registry=registry)
+if flags.prometheus:
+    push_to_gateway(flags.prometheus, job='sync-github', registry=registry)

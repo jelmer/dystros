@@ -30,8 +30,26 @@ from icalendar.prop import vDatetime
 import os
 from dystros import utils, version_string
 import urllib.parse
+from prometheus_client import CollectorRegistry, Counter, Gauge, push_to_gateway
+
+registry = CollectorRegistry()
+last_success_gauge = Gauge(
+    'job_last_success_unixtime',
+    'Last time a batch job successfully finished',
+    registry=registry)
+
+tasks_created_counter = Counter(
+    'tasks_created_count',
+    'Number of tasks that was created',
+    registry=registry)
+
+tasks_updated_counter = Counter(
+    'tasks_updated_count',
+    'Number of tasks that was updated',
+    registry=registry)
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--prometheus', type=str, help='Prometheus host to connect to.', default=None)
 utils.add_calendar_arguments(parser)
 
 flags = parser.parse_args()
@@ -79,8 +97,14 @@ for task in launchpad.bugs.searchTasks(assignee=launchpad.me, status=STATUSES):
     if etag is None:
         print("Adding todo item for %r" % task.self_link)
         utils.add_member(flags.url, 'text/calendar', new.to_ical())
+        tasks_created_counter.inc()
     else:
         url = urllib.parse.urljoin(flags.url, href)
         if new.to_ical() != old.to_ical():
             print("Updating todo item for %r" % task.bug.title)
             utils.put(url, 'text/calendar', new.to_ical(), if_match=[etag])
+            tasks_updated_counter.inc()
+
+last_success_gauge.set_to_current_time()
+if flags.prometheus:
+    push_to_gateway(flags.prometheus, job='sync-launchpad', registry=registry)
